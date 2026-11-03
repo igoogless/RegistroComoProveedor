@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: registro-como-proveedor
+    runtime: docker
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      - key: MAX_AGENT_ITERATIONS
+        value: "12"
+      - key: MAX_SESSION_TOKENS
+        value: "40000"
+      - key: GEMINI_API_KEY
+        sync: false

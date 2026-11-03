@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro como proveedor</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#f5f7fb; --surface:#fff; --text:#152238; --muted:#637083; --brand:#15601d; --border:#dbe2ea; --tool:#eff6ff; --confirm:#fff7df; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#0d1521; --surface:#182331; --text:#edf3fa; --muted:#aab7c5; --border:#334457; --tool:#162c47; --confirm:#483a12; } }
+    * { box-sizing:border-box } body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui,sans-serif; }
+    main { max-width:900px; min-height:100vh; margin:auto; padding:28px 18px; display:flex; flex-direction:column; gap:18px; } header h1 { margin:0; font-size:24px } header p { margin:4px 0 0; color:var(--muted) }
+    #messages { flex:1; display:flex; flex-direction:column; gap:14px; } .message { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; white-space:pre-wrap; } .user { align-self:flex-end; background:var(--brand); color:white; max-width:75%; border-color:var(--brand) }.meta { display:block; font-size:12px; color:var(--muted); margin-bottom:6px }.user .meta{color:#d9f6df}
+    .tool { margin-top:10px; padding:10px; border-radius:8px; background:var(--tool); font-size:13px; overflow:auto }.tool summary { cursor:pointer; font-weight:650 }.confirm { border:2px solid #d89b00; background:var(--confirm); font-weight:600 }
+    form { display:flex; gap:10px; padding:12px; background:var(--surface); border:1px solid var(--border); border-radius:12px } input { flex:1; border:1px solid var(--border); border-radius:8px; padding:11px; background:transparent; color:inherit; font:inherit } button { border:0; border-radius:8px; padding:0 18px; font-weight:700; cursor:pointer; background:var(--brand); color:white } #thinking { color:var(--muted); font-size:13px; display:none }
+    #toast { position:fixed; right:24px; bottom:24px; width:min(390px,calc(100vw - 48px)); transform:translateY(140%); opacity:0; pointer-events:none; transition:transform .28s ease,opacity .28s ease; background:var(--surface); border:1px solid var(--border); border-left:5px solid var(--brand); border-radius:12px; padding:16px; box-shadow:0 12px 28px rgb(0 0 0 / .18); z-index:10 } #toast.visible { transform:translateY(0); opacity:1; pointer-events:auto } #toast.warning { border-left-color:#d89b00 } #toast h2 { margin:0 0 4px; font-size:15px } #toast p { margin:0; color:var(--muted); font-size:14px } #toast button { position:absolute; right:8px; top:8px; padding:3px 8px; background:transparent; color:var(--muted); font-size:17px }
+  </style>
+</head>
+<body><main>
+  <header><h1>Registro como proveedor</h1><p>Prepara formularios y soportes; la firma y el envío permanecen bajo control humano.</p></header>
+  <section id="messages" aria-live="polite"></section><div id="thinking">Procesando herramientas…</div>
+  <form id="chat"><input id="input" autocomplete="off" placeholder='Ej.: Procesa el caso "ec-corp-andina"' aria-label="Mensaje"><button>Enviar</button></form>
+</main><aside id="toast" role="status" aria-live="polite"><button type="button" aria-label="Cerrar notificación">×</button><h2></h2><p></p></aside>
+<script>
+  let sessionId = crypto.randomUUID(); let toastTimer; const messages = document.querySelector('#messages'); const form = document.querySelector('#chat'); const input = document.querySelector('#input'); const thinking = document.querySelector('#thinking'); const toast = document.querySelector('#toast');
+  function notify(title, description, warning=false) { clearTimeout(toastTimer); toast.className=`${warning?'warning':''} visible`; toast.querySelector('h2').textContent=title; toast.querySelector('p').textContent=description; toastTimer=setTimeout(()=>toast.classList.remove('visible'),7000); }
+  toast.querySelector('button').addEventListener('click',()=>toast.classList.remove('visible'));
+  function add(role, content, calls=[], confirmation=false) { const node=document.createElement('article'); node.className=`message ${role}${confirmation?' confirm':''}`; node.innerHTML=`<span class="meta">${role==='user'?'Tú':'Agente'}${confirmation?' · Confirmación requerida':''}</span><div></div>`; node.querySelector('div').textContent=content; calls.forEach(call=>{const d=document.createElement('details');d.className='tool';d.innerHTML=`<summary>${call.name} · ${call.result.ok?'correcto':'error'}</summary><pre></pre>`;d.querySelector('pre').textContent=JSON.stringify({argumentos:call.args,resultado:call.result},null,2);node.append(d)});messages.append(node);node.scrollIntoView({behavior:'smooth',block:'end'}); }
+  add('assistant','Indica un caso para comenzar. Las llamadas de herramientas quedarán visibles aquí.');
+  form.addEventListener('submit', async event=>{event.preventDefault();const message=input.value.trim();if(!message)return;add('user',message);input.value='';thinking.style.display='block';try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId,message})});const data=await r.json();if(!r.ok)throw new Error(data.error||'No fue posible procesar el mensaje.');sessionId=data.sessionId;add('assistant',data.reply,data.toolCalls,data.needsConfirmation);const simulated=data.toolCalls.find(call=>call.name==='proveedor_simular_envio'&&call.result.ok);if(simulated)notify('Envío simulado creado','Se registró la simulación en el proyecto. No se envió ningún correo real.');else if(data.needsConfirmation)notify('Confirmación requerida','La simulación no se ejecutará hasta que respondas “sí”.',true)}catch(error){const detail=error instanceof Error?error.message:'Error inesperado.';add('assistant',detail);notify('No se pudo completar la operación',detail,true)}finally{thinking.style.display='none';input.focus()}});
+</script></body></html>
