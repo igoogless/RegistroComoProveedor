@@ -53,16 +53,20 @@ En producción usaría navegador controlado por el agente, con selectores versio
 | HU-1 | Hecho | Lee solicitud, campos, país, formato y soportes. |
 | HU-2 | Hecho | Mapea con glosario y evidencia de ruta; faltantes y confirmación para reglas de país o confianza menor a 0.8. |
 | HU-3 | Hecho | Genera XLSX, PDF y valores de portal. |
-| HU-4 | Hecho | Copia soportes válidos, marca vencidos/ausentes, redacta correo y simula envío bajo confirmación. |
+| HU-4 | Hecho | Copia soportes exigidos existentes, marca vencidos/ausentes, redacta correo y simula envío bajo confirmación. |
 | HU-5 | Hecho | Errores tipados y mensajes no crudos. |
 
-Para producción faltarían autenticación, almacenamiento seguro de secretos, repositorio documental real, observabilidad y configurar una URL pública en la plataforma de despliegue elegida.
+La aplicación local cumple las HUs con los fixtures. La publicación temporal gratuita en Cloudflare Workers ofrece una URL pública demostrable sin secretos y sin acciones externas; para producción faltarían autenticación, almacenamiento seguro de secretos, repositorio documental real, observabilidad y un despliegue persistente con las variables de entorno configuradas.
 
 ## 9. Uso de IA
 
 Se usó PERXIA como asistente de desarrollo para revisar el PRD y fixtures, estructurar la solución e implementar código. Se descartó cualquier propuesta que inventara valores de proveedor, alterara fixtures o expusiera claves. La persona responsable revisa y puede explicar el código entregado.
 
-## 10. Riesgos y mitigación
+## 10. Publicación y operación
+
+La publicación gratuita se implementa como Cloudflare Worker con los activos estáticos de `web/`. La URL temporal de la entrega se registra en `README.md`. Su Worker usa modo demostración para no almacenar secretos ni ejecutar correo real. La aplicación completa se ejecuta localmente con `npm run dev`; `npm run deploy:cloudflare` publica una versión persistente al autenticar Wrangler. La verificación obligatoria es `npm run typecheck`, `npm run lint` y `npm run demo`.
+
+## 11. Riesgos y mitigación
 
 - **Maestro desactualizado:** asignar propietario, control de vigencia y auditoría de cambios.
 - **Plantillas reales variables/corruptas:** validación previa, reporte accionable y pruebas por cliente.
