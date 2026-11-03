@@ -24,11 +24,20 @@ Abre la URL indicada por la consola. Configura `GEMINI_API_KEY` solo en `.env` p
 
 ## Demo sin modelo
 
+Con Node.js:
+
 ```bash
 npm run demo
 ```
 
-Limpia `out/`, descubre todos los casos de `reto-01/casos/`, ejecuta las herramientas y genera formularios y paquetes.
+Con Bun (cuando esté instalado):
+
+```bash
+bun install
+bun run demo.ts
+```
+
+Limpia `out/`, descubre todos los casos de `reto-01/casos/`, ejecuta las herramientas directamente y genera formularios y paquetes. No requiere una clave de proveedor.
 
 ## Publicación gratuita con Cloudflare Workers
 
@@ -56,9 +65,30 @@ El repositorio conserva `Dockerfile` y `render.yaml` para plataformas compatible
 
 ## API
 
-- `POST /api/chat`: `{ sessionId?, message }`.
-- `GET /api/sessions/:id`: historial completo de la sesión.
-- `GET /api/health`: estado no sensible del servicio.
+| Método | Ruta | Entrada | Respuesta |
+|---|---|---|---|
+| `POST` | `/api/chat` | `{ "sessionId"?: "...", "message": "..." }` | `{ sessionId, reply, toolCalls, needsConfirmation, maxIterations, tokensUsed, maxSessionTokens }` |
+| `GET` | `/api/sessions/:id` | — | Historial completo, casos listos y consumo de tokens de la sesión. |
+| `GET` | `/api/health` | — | `{ ok: true, provider, model }`, sin secretos. |
+
+La publicación gratuita Cloudflare expone las mismas rutas en modo demostración. El backend Node implementa el ciclo Gemini y las herramientas locales.
+
+## Estructura
+
+```text
+agent/prompt.md                       comportamiento del agente
+src/knowledge/registro-proveedor.md   reglas de negocio y conocimiento
+src/tools/proveedor.ts                ejecución determinista de herramientas
+src/llm/                              adaptador Gemini y contrato del proveedor
+src/server.ts                         API HTTP y ciclo del agente
+src/worker.ts                         publicación Cloudflare en modo demostración
+web/                                  interfaz de chat
+reto-01/                              fixtures entregados, solo lectura
+out/                                  salida local generada, no versionada
+modulo/                               bonus reutilizable
+```
+
+Los fixtures se conservan bajo `reto-01/` porque esa es la carpeta entregada con el reto; las herramientas resuelven sus rutas desde la raíz del proyecto y nunca los modifican.
 
 ## Verificación
 
